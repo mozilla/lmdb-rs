@@ -152,4 +152,26 @@ mod test_utils {
             .len();
         assert!(size < 1_000_000);
     }
+
+
+    // Verify that one can create a database larger than 2 GB
+    #[test]
+    fn verify_2gb_plus() {
+        let dir = TempDir::new("test").unwrap();
+            let env = Environment::new()
+                .set_map_size(4_000_000_000)
+                .open(dir.path()).expect("open lmdb env");
+            let db = env.open_db(None).unwrap();
+
+            let data: Vec<u8> = (0..1_000_000).into_iter().map(|i| i as u8).collect();
+
+            // try to write 3 GB of data
+            let mut tx = env.begin_rw_txn().expect("begin_rw_txn");
+            for i in 0..3000 {
+                let key = &data[i..(i+32)];
+                tx.put(db, &key, &data, WriteFlags::empty()).expect("tx.put");
+            }
+            tx.commit().expect("tx.commit")
+    }
+
 }
