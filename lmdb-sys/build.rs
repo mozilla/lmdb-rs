@@ -16,6 +16,20 @@ fn main() {
         if target.contains("android") {
             build.define("ANDROID", "1");
         }
+        if target.contains("windows") {
+            // LMDB on Windows has an issue with ´off_t´ being defined as ´long´ 32-bit signed
+            // which caused a max size of the database of 2 GB which we work 
+            // around by redefining ´off_t´ to 64-bit
+            // 
+            // was discussed here and allgedly fixed in January 2016 but fix doesn't work as 
+            // Windows doesn't support _FILE_OFFSET_BITS
+            // https://www.openldap.org/lists/openldap-bugs/201605/msg00015.htm
+            // https://github.com/LMDB/lmdb/commit/20dec1f69bf4860202c764ce92b1fbbe3d11a065
+            build.define("_OFF_T_DEFINED", "1");
+            build.define("off_t", "__int64");
+            build.define("_off_t", "__int64");
+        }
+
         build
             .file(lmdb.join("mdb.c"))
             .file(lmdb.join("midl.c"))
