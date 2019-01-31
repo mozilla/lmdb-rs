@@ -23,8 +23,19 @@ fn main() {
             .file(lmdb.join("mdb.c"))
             .file(lmdb.join("midl.c"))
             // https://github.com/LMDB/lmdb/blob/LMDB_0.9.21/libraries/liblmdb/Makefile#L25
-            .opt_level(2)
-            .flag(&format!("-include{}", undefine_have_memalign_h.to_str().unwrap()))
-            .compile("liblmdb.a")
+            .opt_level(2);
+
+        // Undefine HAVE_MEMALIGN via -include preprocessor flag to avoid
+        // implicit function declaration when mdb.c uses memalign() without
+        // including malloc.h (https://github.com/mozilla/lmdb-rs/pull/28).
+        //
+        // It'd presumably be better to test if is_flag_supported("-include"),
+        // but that doesn't seem to work, perhaps because the -include flag
+        // is a preprocessor flag rather than a compiler flag?
+        if !build.get_compiler().is_like_msvc() {
+            build.flag("-include").flag(undefine_have_memalign_h.to_str().unwrap());
+        }
+
+        build.compile("liblmdb.a");
     }
 }
