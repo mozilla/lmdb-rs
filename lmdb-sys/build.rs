@@ -10,6 +10,9 @@ fn main() {
     lmdb.push("libraries");
     lmdb.push("liblmdb");
 
+    let mut undefine_have_memalign_h: PathBuf = PathBuf::from(&env::var("CARGO_MANIFEST_DIR").unwrap());
+    undefine_have_memalign_h.push("undefine-have-memalign.h");
+
     if !pkg_config::find_library("liblmdb").is_ok() {
         let target = env::var("TARGET").expect("No TARGET found");
         let mut build = cc::Build::new();
@@ -21,6 +24,7 @@ fn main() {
             .file(lmdb.join("midl.c"))
             // https://github.com/LMDB/lmdb/blob/LMDB_0.9.21/libraries/liblmdb/Makefile#L25
             .opt_level(2)
+            .flag(&format!("-include{}", undefine_have_memalign_h.to_str().unwrap()))
             .compile("liblmdb.a")
     }
 }
