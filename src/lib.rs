@@ -24,7 +24,7 @@ pub use database::Database;
 pub use environment::{
     Environment,
     EnvironmentBuilder,
-    EnvInfo,
+    Info,
     Stat,
 };
 pub use error::{Error, Result};

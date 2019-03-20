@@ -165,9 +165,9 @@ impl Environment {
     }
 
     /// Retrieves info about this environment.
-    pub fn info(&self) -> Result<EnvInfo> {
+    pub fn info(&self) -> Result<Info> {
         unsafe {
-            let mut info = EnvInfo(mem::zeroed());
+            let mut info = Info(mem::zeroed());
             lmdb_try!(ffi::mdb_env_info(self.env(), &mut info.0));
             Ok(info)
         }
@@ -242,9 +242,9 @@ impl Stat {
 /// Environment information.
 ///
 /// Contains environment information about the map size, readers, last txn id etc.
-pub struct EnvInfo(ffi::MDB_envinfo);
+pub struct Info(ffi::MDB_envinfo);
 
-impl EnvInfo {
+impl Info {
     /// Size of memory map.
     #[inline]
     pub fn map_size(&self) -> usize {
@@ -556,6 +556,11 @@ mod test {
 
         let mut info = env.info().unwrap();
         let default_size = info.map_size();
+
+        // Resizing to 0 merely reloads the map size
+        env.set_map_size(0).unwrap();
+        info = env.info().unwrap();
+        assert_eq!(info.map_size(), default_size);
 
         env.set_map_size(2 * default_size).unwrap();
         info = env.info().unwrap();
