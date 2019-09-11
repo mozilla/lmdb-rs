@@ -1,16 +1,31 @@
 environment:
   matrix:
-    - TARGET: x86_64-pc-windows-msvc
+    # Stable channel
+    - TARGET: i686-pc-windows-gnu
       TOOLCHAIN: stable
     - TARGET: i686-pc-windows-msvc
       TOOLCHAIN: stable
+    - TARGET: x86_64-pc-windows-gnu
+      TOOLCHAIN: stable
     - TARGET: x86_64-pc-windows-msvc
+      TOOLCHAIN: stable
+    # Beta channel
+    - TARGET: i686-pc-windows-gnu
       TOOLCHAIN: beta
     - TARGET: i686-pc-windows-msvc
       TOOLCHAIN: beta
+    - TARGET: x86_64-pc-windows-gnu
+      TOOLCHAIN: beta
     - TARGET: x86_64-pc-windows-msvc
+      TOOLCHAIN: beta
+    # Nightly channel
+    - TARGET: i686-pc-windows-gnu
       TOOLCHAIN: nightly
     - TARGET: i686-pc-windows-msvc
+      TOOLCHAIN: nightly
+    - TARGET: x86_64-pc-windows-gnu
+      TOOLCHAIN: nightly
+    - TARGET: x86_64-pc-windows-msvc
       TOOLCHAIN: nightly
 
 install:
@@ -18,7 +33,7 @@ install:
   - rustup-init.exe -y --default-host %TARGET% --default-toolchain %TOOLCHAIN%
   - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - choco install make -y
-  - choco install mingw -y
+  - choco install msys2-installer -y
   - refreshenv
   - rustc -Vv
   - cargo -V
