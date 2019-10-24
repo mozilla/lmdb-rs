@@ -14,6 +14,7 @@ categories = ["database", "external-ffi-bindings"]
 
 # NB: When generating bindings, change to "bindgen.rs" or use something
 # like `cargo-script` instead.
+# You must also uncomment the bindgen dependency below.
 build = "build.rs"
 
 [lib]
@@ -29,7 +30,8 @@ libc = "0.2"
 [build-dependencies]
 pkg-config = "0.3"
 cc = "1.0"
-bindgen = { version = "0.51.1-oldsyn", default-features = false }
+# NB: Only necessary when regenerating bindings, see above for `build`
+#bindgen = { version = "0.51.1-oldsyn", default-features = false }
 
 [features]
 default = []
