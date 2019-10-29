@@ -35,6 +35,7 @@ default = []
 with-asan = []
 with-fuzzer = []
 with-fuzzer-no-link = []
+with-ndebug = []
 
 # These features configure the MDB_IDL_LOGN macro, which determines
 # the size of the free and dirty page lists (and thus the amount of memory

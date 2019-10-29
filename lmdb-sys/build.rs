@@ -71,6 +71,11 @@ fn main() {
             .flag_if_supported("-Wbad-function-cast")
             .flag_if_supported("-Wuninitialized");
 
+
+        if env::var("CARGO_FEATURE_WITH_NDEBUG").is_ok() {
+            builder.define("NDEBUG", Some("1"));
+        }
+
         if env::var("CARGO_FEATURE_WITH_ASAN").is_ok() {
             builder.flag("-fsanitize=address");
         }
