@@ -116,7 +116,7 @@ impl Error {
 
 impl fmt::Display for Error {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}", self.description())
+        write!(fmt, "{}", self)
     }
 }
 
@@ -144,13 +144,11 @@ pub fn lmdb_result(err_code: c_int) -> Result<()> {
 #[cfg(test)]
 mod test {
 
-    use std::error::Error as StdError;
-
     use super::*;
 
     #[test]
     fn test_description() {
-        assert_eq!("Permission denied", Error::from_err_code(13).description());
-        assert_eq!("MDB_NOTFOUND: No matching key/data pair found", Error::NotFound.description());
+        assert_eq!("Permission denied", Error::from_err_code(13).to_string());
+        assert_eq!("MDB_NOTFOUND: No matching key/data pair found", Error::NotFound.to_string());
     }
 }
