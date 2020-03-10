@@ -14,9 +14,9 @@ pub type mode_t = ::libc::c_int;
 
 #[cfg(unix)]
 #[allow(non_camel_case_types)]
-pub type filehandle_t = ::libc::c_int;
+pub type mdb_filehandle_t = ::libc::c_int;
 #[cfg(windows)]
 #[allow(non_camel_case_types)]
-pub type filehandle_t = *mut ::libc::c_void;
+pub type mdb_filehandle_t = *mut ::libc::c_void;
 
 include!("bindings.rs");
