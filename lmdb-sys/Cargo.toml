@@ -12,7 +12,7 @@ readme = "../README.md"
 keywords = ["LMDB", "database", "storage-engine", "bindings", "library"]
 categories = ["database", "external-ffi-bindings"]
 
-# NB: Use "--feature bindgen" to generate bindings.
+# NB: Use "--features bindgen" to generate bindings.
 build = "build.rs"
 
 [lib]

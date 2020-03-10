@@ -7,10 +7,10 @@ extern crate libc;
 
 #[cfg(unix)]
 #[allow(non_camel_case_types)]
-pub type mode_t = ::libc::mode_t;
+pub type mdb_mode_t = ::libc::mode_t;
 #[cfg(windows)]
 #[allow(non_camel_case_types)]
-pub type mode_t = ::libc::c_int;
+pub type mdb_mode_t = ::libc::c_int;
 
 #[cfg(unix)]
 #[allow(non_camel_case_types)]
