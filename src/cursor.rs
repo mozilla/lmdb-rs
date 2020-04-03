@@ -651,20 +651,19 @@ mod test {
 
         assert_eq!(0, cursor.iter_dup_of(b"foo").count());
     }
-    
+
     #[test]
     fn test_iter_del_get() {
         let dir = TempDir::new("test").unwrap();
         let env = Environment::new().open(dir.path()).unwrap();
         let db = env.create_db(None, DatabaseFlags::DUP_SORT).unwrap();
 
-        let items: Vec<(&[u8], &[u8])> = vec!((b"a", b"1"),
-                                              (b"b", b"2"));
+        let items: Vec<(&[u8], &[u8])> = vec![(b"a", b"1"), (b"b", b"2")];
         let r: Vec<(&[u8], &[u8])> = Vec::new();
         {
             let txn = env.begin_ro_txn().unwrap();
             let mut cursor = txn.open_ro_cursor(db).unwrap();
-            assert_eq!(r, cursor.iter_dup_of(b"a").collect::<Vec<_>>());
+            assert_eq!(r, cursor.iter_dup_of(b"a").collect::<Result<Vec<_>>>().unwrap());
         }
 
         {
@@ -677,17 +676,18 @@ mod test {
 
         let mut txn = env.begin_rw_txn().unwrap();
         let mut cursor = txn.open_rw_cursor(db).unwrap();
-        assert_eq!(items, cursor.iter_dup().flat_map(|x| x).collect::<Vec<_>>());
+        assert_eq!(items, cursor.iter_dup().flat_map(|x| x).collect::<Result<Vec<_>>>().unwrap());
 
-        assert_eq!(items.clone().into_iter().take(1).collect::<Vec<(&[u8], &[u8])>>(),
-                   cursor.iter_dup_of(b"a").collect::<Vec<_>>());
+        assert_eq!(
+            items.clone().into_iter().take(1).collect::<Vec<(&[u8], &[u8])>>(),
+            cursor.iter_dup_of(b"a").collect::<Result<Vec<_>>>().unwrap()
+        );
 
-        assert_eq!((None, &b"1"[..]),
-                   cursor.get(Some(b"a"), Some(b"1"), MDB_SET).unwrap());
+        assert_eq!((None, &b"1"[..]), cursor.get(Some(b"a"), Some(b"1"), MDB_SET).unwrap());
 
         cursor.del(WriteFlags::empty()).unwrap();
-        
-        assert_eq!(r, cursor.iter_dup_of(b"a").collect::<Vec<_>>());
+
+        assert_eq!(r, cursor.iter_dup_of(b"a").collect::<Result<Vec<_>>>().unwrap());
     }
 
     #[test]
