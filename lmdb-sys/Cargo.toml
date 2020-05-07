@@ -26,12 +26,13 @@ appveyor = { repository = "mozilla/lmdb-rs" }
 libc = "0.2"
 
 [build-dependencies]
-pkg-config = "0.3"
 cc = "1.0"
 bindgen = { version = "0.53.2", default-features = false, optional = true, features = ["runtime"] }
+pkg-config = { version = "0.3", optional = true }
 
 [features]
-default = []
+default = ["use-local-lib"]
+use-local-lib = ["pkg-config"] # use local liblmdb if exists, instead of compiling from source
 with-asan = []
 with-fuzzer = []
 with-fuzzer-no-link = []

@@ -1,4 +1,5 @@
 extern crate cc;
+#[cfg(feature = "use-local-lib")]
 extern crate pkg_config;
 
 #[cfg(feature = "bindgen")]
@@ -59,28 +60,33 @@ fn main() {
         warn!("Building with `-fsanitize=fuzzer`.");
     }
 
-    if !pkg_config::find_library("liblmdb").is_ok() {
-        let mut builder = cc::Build::new();
-
-        builder
-            .define("MDB_IDL_LOGN", Some(MDB_IDL_LOGN.to_string().as_str()))
-            .file(lmdb.join("mdb.c"))
-            .file(lmdb.join("midl.c"))
-            // https://github.com/mozilla/lmdb/blob/b7df2cac50fb41e8bd16aab4cc5fd167be9e032a/libraries/liblmdb/Makefile#L23
-            .flag_if_supported("-Wno-unused-parameter")
-            .flag_if_supported("-Wbad-function-cast")
-            .flag_if_supported("-Wuninitialized");
-
-        if env::var("CARGO_FEATURE_WITH_ASAN").is_ok() {
-            builder.flag("-fsanitize=address");
-        }
-
-        if env::var("CARGO_FEATURE_WITH_FUZZER").is_ok() {
-            builder.flag("-fsanitize=fuzzer");
-        } else if env::var("CARGO_FEATURE_WITH_FUZZER_NO_LINK").is_ok() {
-            builder.flag("-fsanitize=fuzzer-no-link");
-        }
-
-        builder.compile("liblmdb.a")
+    #[cfg(feature = "use-local-lib")]
+    if pkg_config::find_library("liblmdb").is_ok() {
+        return;
     }
+
+    // compile library
+
+    let mut builder = cc::Build::new();
+
+    builder
+        .define("MDB_IDL_LOGN", Some(MDB_IDL_LOGN.to_string().as_str()))
+        .file(lmdb.join("mdb.c"))
+        .file(lmdb.join("midl.c"))
+        // https://github.com/mozilla/lmdb/blob/b7df2cac50fb41e8bd16aab4cc5fd167be9e032a/libraries/liblmdb/Makefile#L23
+        .flag_if_supported("-Wno-unused-parameter")
+        .flag_if_supported("-Wbad-function-cast")
+        .flag_if_supported("-Wuninitialized");
+
+    if env::var("CARGO_FEATURE_WITH_ASAN").is_ok() {
+        builder.flag("-fsanitize=address");
+    }
+
+    if env::var("CARGO_FEATURE_WITH_FUZZER").is_ok() {
+        builder.flag("-fsanitize=fuzzer");
+    } else if env::var("CARGO_FEATURE_WITH_FUZZER_NO_LINK").is_ok() {
+        builder.flag("-fsanitize=fuzzer-no-link");
+    }
+
+    builder.compile("liblmdb.a")
 }
