@@ -61,8 +61,10 @@ fn main() {
     }
 
     #[cfg(feature = "use-local-lib")]
-    if pkg_config::find_library("liblmdb").is_ok() {
-        return;
+    {
+        if pkg_config::find_library("liblmdb").is_ok() {
+            return;
+        }
     }
 
     // compile library
