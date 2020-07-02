@@ -45,14 +45,15 @@ libc = "0.2"
 # of lmdb-rkv-sys on crates.io when publishing lmdb-rkv to that crate registry.
 #
 # (See "Publishing to crates.io" in README.md for more information.)
-lmdb-rkv-sys = { path = "./lmdb-sys" }
+lmdb-rkv-sys = { path = "./lmdb-sys", default-features = false }
 
 [dev-dependencies]
 rand = "0.4"
 tempdir = "0.3"
 
 [features]
-default = []
+default = ["use-local-lib"]
+use-local-lib = ["lmdb-rkv-sys/use-local-lib"] # use local liblmdb if exists, instead of compiling from source
 with-asan = ["lmdb-rkv-sys/with-asan"]
 with-fuzzer = ["lmdb-rkv-sys/with-fuzzer"]
 with-fuzzer-no-link = ["lmdb-rkv-sys/with-fuzzer-no-link"]
