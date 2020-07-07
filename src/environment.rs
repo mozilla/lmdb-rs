@@ -396,7 +396,10 @@ impl EnvironmentBuilder {
     ///
     /// The path may not contain the null character, Windows UNC (Uniform Naming Convention)
     /// paths are not supported either.
-    pub fn open(&self, path: &Path) -> Result<Environment> {
+    pub fn open<P>(&self, path: P) -> Result<Environment>
+    where
+        P: AsRef<Path>,
+    {
         self.open_with_permissions(path, 0o644)
     }
 
@@ -406,7 +409,10 @@ impl EnvironmentBuilder {
     ///
     /// The path may not contain the null character, Windows UNC (Uniform Naming Convention)
     /// paths are not supported either.
-    pub fn open_with_permissions(&self, path: &Path, mode: ffi::mdb_mode_t) -> Result<Environment> {
+    pub fn open_with_permissions<P>(&self, path: P, mode: ffi::mdb_mode_t) -> Result<Environment>
+    where
+        P: AsRef<Path>,
+    {
         let mut env: *mut ffi::MDB_env = ptr::null_mut();
         unsafe {
             lmdb_try!(ffi::mdb_env_create(&mut env));
@@ -419,7 +425,7 @@ impl EnvironmentBuilder {
             if let Some(map_size) = self.map_size {
                 lmdb_try_with_cleanup!(ffi::mdb_env_set_mapsize(env, map_size), ffi::mdb_env_close(env))
             }
-            let path = match CString::new(path.as_os_str().as_bytes()) {
+            let path = match CString::new(path.as_ref().as_os_str().as_bytes()) {
                 Ok(path) => path,
                 Err(..) => return Err(::Error::Invalid),
             };
