@@ -62,7 +62,7 @@ pub trait Cursor<'txn> {
     }
 
     /// Iterate over database items backwards. The iterator will begin with item
-    /// before the cursor, and continue until the startd of the database. For new
+    /// before the cursor, and continue until the start of the database. For new
     /// cursors, the iterator will begin with the last item in the database.
     ///
     /// For databases with duplicate data items (`DatabaseFlags::DUP_SORT`), the
@@ -84,8 +84,8 @@ pub trait Cursor<'txn> {
     /// Iterate backwards over database items starting from the end of the database.
     ///
     /// For databases with duplicate data items (`DatabaseFlags::DUP_SORT`), the
-    /// duplicate data items of each key will be returned before moving on to
-    /// the next key.
+    /// duplicate data items of each key will be returned in reverse order before
+    /// moving on to the next key.
     fn iter_end_backwards(&mut self) -> Iter<'txn> {
         Iter::new(self.cursor(), ffi::MDB_LAST, ffi::MDB_PREV)
     }
@@ -115,7 +115,7 @@ pub trait Cursor<'txn> {
 
     /// Iterate backwards over duplicate database items. The iterator will begin with the
     /// item before the cursor, and continue until the start of the database.
-    /// Each item will be returned as an iterator of its duplicates.
+    /// Each item will be returned as an iterator of its duplicates in reverse order.
     fn iter_dup_backwards(&mut self) -> IterDup<'txn> {
         IterDup::new(self.cursor(), ffi::MDB_PREV, Direction::Backwards)
     }
@@ -127,7 +127,8 @@ pub trait Cursor<'txn> {
     }
 
     /// Iterate backwards over duplicate database items starting from the end of the
-    /// database. Each item will be returned as an iterator of its duplicates.
+    /// database. Each item will be returned as an iterator of its duplicates in
+    /// reverse order.
     fn iter_dup_end_backwards(&mut self) -> IterDup<'txn> {
         IterDup::new(self.cursor(), ffi::MDB_LAST, Direction::Backwards)
     }
