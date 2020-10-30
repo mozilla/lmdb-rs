@@ -61,6 +61,17 @@ pub trait Cursor<'txn> {
         Iter::new(self.cursor(), ffi::MDB_NEXT, ffi::MDB_NEXT)
     }
 
+    /// Iterate over database items backwards. The iterator will begin with item
+    /// before the cursor, and continue until the startd of the database. For new
+    /// cursors, the iterator will begin with the last item in the database.
+    ///
+    /// For databases with duplicate data items (`DatabaseFlags::DUP_SORT`), the
+    /// duplicate data items of each key will be returned before moving on to
+    /// the next key.
+    fn iter_backwards(&mut self) -> Iter<'txn> {
+        Iter::new(self.cursor(), ffi::MDB_PREV, ffi::MDB_PREV)
+    }
+
     /// Iterate over database items starting from the beginning of the database.
     ///
     /// For databases with duplicate data items (`DatabaseFlags::DUP_SORT`), the
@@ -68,6 +79,15 @@ pub trait Cursor<'txn> {
     /// the next key.
     fn iter_start(&mut self) -> Iter<'txn> {
         Iter::new(self.cursor(), ffi::MDB_FIRST, ffi::MDB_NEXT)
+    }
+
+    /// Iterate backwards over database items starting from the end of the database.
+    ///
+    /// For databases with duplicate data items (`DatabaseFlags::DUP_SORT`), the
+    /// duplicate data items of each key will be returned before moving on to
+    /// the next key.
+    fn iter_end_backwards(&mut self) -> Iter<'txn> {
+        Iter::new(self.cursor(), ffi::MDB_LAST, ffi::MDB_PREV)
     }
 
     /// Iterate over database items starting from the given key.
@@ -90,13 +110,26 @@ pub trait Cursor<'txn> {
     /// item next after the cursor, and continue until the end of the database.
     /// Each item will be returned as an iterator of its duplicates.
     fn iter_dup(&mut self) -> IterDup<'txn> {
-        IterDup::new(self.cursor(), ffi::MDB_NEXT)
+        IterDup::new(self.cursor(), ffi::MDB_NEXT, Direction::Forwards)
+    }
+
+    /// Iterate backwards over duplicate database items. The iterator will begin with the
+    /// item before the cursor, and continue until the start of the database.
+    /// Each item will be returned as an iterator of its duplicates.
+    fn iter_dup_backwards(&mut self) -> IterDup<'txn> {
+        IterDup::new(self.cursor(), ffi::MDB_PREV, Direction::Backwards)
     }
 
     /// Iterate over duplicate database items starting from the beginning of the
     /// database. Each item will be returned as an iterator of its duplicates.
     fn iter_dup_start(&mut self) -> IterDup<'txn> {
-        IterDup::new(self.cursor(), ffi::MDB_FIRST)
+        IterDup::new(self.cursor(), ffi::MDB_FIRST, Direction::Forwards)
+    }
+
+    /// Iterate backwards over duplicate database items starting from the end of the
+    /// database. Each item will be returned as an iterator of its duplicates.
+    fn iter_dup_end_backwards(&mut self) -> IterDup<'txn> {
+        IterDup::new(self.cursor(), ffi::MDB_LAST, Direction::Backwards)
     }
 
     /// Iterate over duplicate items in the database starting from the given
@@ -109,7 +142,7 @@ pub trait Cursor<'txn> {
             Ok(_) | Err(Error::NotFound) => (),
             Err(error) => return IterDup::Err(error),
         };
-        IterDup::new(self.cursor(), ffi::MDB_GET_CURRENT)
+        IterDup::new(self.cursor(), ffi::MDB_GET_CURRENT, Direction::Forwards)
     }
 
     /// Iterate over the duplicates of the item in the database with the given key.
@@ -341,6 +374,8 @@ impl<'txn> Iterator for Iter<'txn> {
     }
 }
 
+pub enum Direction { Forwards, Backwards }
+
 /// An iterator over the keys and duplicate values in an LMDB database.
 ///
 /// The yielded items of the iterator are themselves iterators over the duplicate values for a
@@ -364,6 +399,9 @@ pub enum IterDup<'txn> {
         /// The first operation to perform when the consumer calls Iter.next().
         op: c_uint,
 
+        /// Forwards or backwards iteration direction
+        direction: Direction,
+
         /// A marker to ensure the iterator doesn't outlive the transaction.
         _marker: PhantomData<fn(&'txn ())>,
     },
@@ -371,10 +409,11 @@ pub enum IterDup<'txn> {
 
 impl<'txn> IterDup<'txn> {
     /// Creates a new iterator backed by the given cursor.
-    fn new<'t>(cursor: *mut ffi::MDB_cursor, op: c_uint) -> IterDup<'t> {
+    fn new<'t>(cursor: *mut ffi::MDB_cursor, op: c_uint, direction: Direction) -> IterDup<'t> {
         IterDup::Ok {
             cursor,
             op,
+            direction,
             _marker: PhantomData,
         }
     }
@@ -394,6 +433,7 @@ impl<'txn> Iterator for IterDup<'txn> {
             &mut IterDup::Ok {
                 cursor,
                 ref mut op,
+                direction,
                 _marker,
             } => {
                 let mut key = ffi::MDB_val {
@@ -404,11 +444,11 @@ impl<'txn> Iterator for IterDup<'txn> {
                     mv_size: 0,
                     mv_data: ptr::null_mut(),
                 };
-                let op = mem::replace(op, ffi::MDB_NEXT_NODUP);
+                let op = mem::replace(op, match direction { Forwards => ffi::MDB_NEXT_NODUP, Backwards => ffi::MDB_PREV_NODUP });
                 let err_code = unsafe { ffi::mdb_cursor_get(cursor, &mut key, &mut data, op) };
 
                 if err_code == ffi::MDB_SUCCESS {
-                    Some(Iter::new(cursor, ffi::MDB_GET_CURRENT, ffi::MDB_NEXT_DUP))
+                    Some(Iter::new(cursor, ffi::MDB_GET_CURRENT, match direction { Forwards => ffi::MDB_NEXT_DUP, Backwards => ffi::MDB_PREV_DUP }))
                 } else {
                     None
                 }
@@ -555,6 +595,29 @@ mod test {
             vec!().into_iter().collect::<Vec<(&[u8], &[u8])>>(),
             cursor.iter_from(b"key6").collect::<Result<Vec<_>>>().unwrap()
         );
+
+        // backwards iterators
+        let reverse_items = items.clone().into_iter().rev().collect::<Vec<(&[u8], &[u8])>>();
+        let mut cursor = txn.open_ro_cursor(db).unwrap();
+
+        assert_eq!(reverse_items, cursor.iter_backwards().collect::<Result<Vec<_>>>().unwrap());
+
+        cursor.get(Some(b"key3"), None, MDB_SET).unwrap();
+        assert_eq!(
+            reverse_items.clone().into_iter().skip(2).collect::<Vec<_>>(),
+            cursor.iter_backwards().collect::<Result<Vec<_>>>().unwrap()
+        );
+
+        // ping pong
+        assert_eq!(reverse_items, cursor.iter_end_backwards().collect::<Result<Vec<_>>>().unwrap());
+        assert_eq!(
+            items.clone().into_iter().skip(1).collect::<Vec<_>>(),
+            cursor.iter().collect::<Result<Vec<_>>>().unwrap()
+        );
+        assert_eq!(
+            reverse_items.clone().into_iter().skip(1).collect::<Vec<_>>(),
+            cursor.iter_backwards().collect::<Result<Vec<_>>>().unwrap()
+        );
     }
 
     #[test]
@@ -654,6 +717,31 @@ mod test {
         );
 
         assert_eq!(0, cursor.iter_dup_of(b"foo").count());
+
+        // backwards iterators
+        let reverse_items = items.clone().into_iter().rev().collect::<Vec<(&[u8], &[u8])>>();
+        let mut cursor = txn.open_ro_cursor(db).unwrap();
+
+        assert_eq!(reverse_items, cursor.iter_dup_backwards().flatten().collect::<Result<Vec<_>>>().unwrap());
+
+        cursor.get(Some(b"c"), None, MDB_SET).unwrap();
+        assert_eq!(
+            reverse_items.clone().into_iter().skip(6).collect::<Vec<(&[u8], &[u8])>>(),
+            cursor.iter_dup_backwards().flatten().collect::<Result<Vec<_>>>().unwrap()
+        );
+
+        assert_eq!(reverse_items, cursor.iter_dup_end_backwards().flatten().collect::<Result<Vec<(&[u8], &[u8])>>>().unwrap());
+
+        // ping pong
+        assert_eq!(reverse_items, cursor.iter_dup_end_backwards().flatten().collect::<Result<Vec<_>>>().unwrap());
+        assert_eq!(
+            items.clone().into_iter().skip(1).collect::<Vec<_>>(),
+            cursor.iter_dup().flatten().collect::<Result<Vec<_>>>().unwrap()
+        );
+        assert_eq!(
+            reverse_items.clone().into_iter().skip(1).collect::<Vec<_>>(),
+            cursor.iter_dup_backwards().flatten().collect::<Result<Vec<_>>>().unwrap()
+        );
     }
 
     #[test]
