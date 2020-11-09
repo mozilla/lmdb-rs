@@ -26,7 +26,7 @@ appveyor = { repository = "mozilla/lmdb-rs" }
 libc = "0.2"
 
 [build-dependencies]
-pkg-config = "0.3"
+pkg-config = "0.3.3"
 cc = "1.0"
 bindgen = { version = "0.53.2", default-features = false, optional = true, features = ["runtime"] }
 
