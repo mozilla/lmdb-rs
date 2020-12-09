@@ -37,10 +37,18 @@ impl ParseCallbacks for Callbacks {
 }
 
 pub fn generate() {
-    let mut lmdb = PathBuf::from(&env::var("CARGO_MANIFEST_DIR").unwrap());
-    lmdb.push("lmdb");
-    lmdb.push("libraries");
-    lmdb.push("liblmdb");
+    let mut lmdb;
+    match pkg_config::probe_library("lmdb") {
+        Ok(mut library) => {
+            lmdb = library.include_paths.pop().unwrap();
+        }
+        Err(_) => {
+            lmdb = PathBuf::from(&env::var("CARGO_MANIFEST_DIR").unwrap());
+            lmdb.push("lmdb");
+            lmdb.push("libraries");
+            lmdb.push("liblmdb");
+        }
+    }
 
     let mut out_path = PathBuf::from(&env::var("CARGO_MANIFEST_DIR").unwrap());
     out_path.push("src");
