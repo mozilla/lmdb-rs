@@ -2,8 +2,8 @@
 
 pub const MDB_VERSION_MAJOR: ::libc::c_uint = 0;
 pub const MDB_VERSION_MINOR: ::libc::c_uint = 9;
-pub const MDB_VERSION_PATCH: ::libc::c_uint = 24;
-pub const MDB_VERSION_DATE: &'static [u8; 14usize] = b"July 24, 2019\0";
+pub const MDB_VERSION_PATCH: ::libc::c_uint = 26;
+pub const MDB_VERSION_DATE: &'static [u8; 16usize] = b"August 11, 2020\0";
 pub const MDB_FIXEDMAP: ::libc::c_uint = 1;
 pub const MDB_NOSUBDIR: ::libc::c_uint = 16384;
 pub const MDB_NOSYNC: ::libc::c_uint = 65536;
@@ -307,7 +307,7 @@ extern "C" {
     #[doc = "\t<li>#MDB_NOTLS"]
     #[doc = "\t\tDon't use Thread-Local Storage. Tie reader locktable slots to"]
     #[doc = "\t\t#MDB_txn objects instead of to threads. I.e. #mdb_txn_reset() keeps"]
-    #[doc = "\t\tthe slot reseved for the #MDB_txn object. A thread may use parallel"]
+    #[doc = "\t\tthe slot reserved for the #MDB_txn object. A thread may use parallel"]
     #[doc = "\t\tread-only transactions. A read-only transaction may span threads if"]
     #[doc = "\t\tthe user synchronizes its use. Applications that multiplex many"]
     #[doc = "\t\tuser threads over individual OS threads need this option. Such an"]
