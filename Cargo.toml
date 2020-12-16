@@ -45,7 +45,7 @@ libc = "0.2"
 # of lmdb-rkv-sys on crates.io when publishing lmdb-rkv to that crate registry.
 #
 # (See "Publishing to crates.io" in README.md for more information.)
-lmdb-rkv-sys = { path = "./lmdb-sys" }
+lmdb-rkv-sys = { path = "./lmdb-sys", features = ["bindgen"] }
 
 [dev-dependencies]
 rand = "0.4"
