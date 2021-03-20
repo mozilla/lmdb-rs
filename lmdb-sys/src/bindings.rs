@@ -2,8 +2,8 @@
 
 pub const MDB_VERSION_MAJOR: ::libc::c_uint = 0;
 pub const MDB_VERSION_MINOR: ::libc::c_uint = 9;
-pub const MDB_VERSION_PATCH: ::libc::c_uint = 24;
-pub const MDB_VERSION_DATE: &'static [u8; 14usize] = b"July 24, 2019\0";
+pub const MDB_VERSION_PATCH: ::libc::c_uint = 28;
+pub const MDB_VERSION_DATE: &'static [u8; 17usize] = b"February 4, 2020\0";
 pub const MDB_FIXEDMAP: ::libc::c_uint = 1;
 pub const MDB_NOSUBDIR: ::libc::c_uint = 16384;
 pub const MDB_NOSYNC: ::libc::c_uint = 65536;
