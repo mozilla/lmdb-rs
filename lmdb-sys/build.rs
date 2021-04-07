@@ -1,10 +1,8 @@
 extern crate cc;
 extern crate pkg_config;
 
-#[cfg(feature = "bindgen")]
 extern crate bindgen;
 
-#[cfg(feature = "bindgen")]
 #[path = "bindgen.rs"]
 mod generate;
 
@@ -46,7 +44,6 @@ macro_rules! warn {
 }
 
 fn main() {
-    #[cfg(feature = "bindgen")]
     generate::generate();
 
     let mut lmdb = PathBuf::from(&env::var("CARGO_MANIFEST_DIR").unwrap());
