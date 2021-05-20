@@ -1,6 +1,7 @@
 use bindgen::callbacks::IntKind;
 use bindgen::callbacks::ParseCallbacks;
 use std::env;
+use std::fs;
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -51,8 +52,11 @@ pub fn generate() {
         }
     }
 
-    let mut out_path = PathBuf::from(&env::var("CARGO_MANIFEST_DIR").unwrap());
-    out_path.push("src");
+    let src_bindings_path = PathBuf::from(&env::var("CARGO_MANIFEST_DIR").unwrap())
+        .join("src")
+        .join("bindings.rs");
+    let out_bindings_path =
+        PathBuf::from(env::var("OUT_DIR").unwrap()).join("lmdb-sys-bindings.rs");
 
     let bindings = bindgen::Builder::default()
         .header(lmdb.join("lmdb.h").to_string_lossy())
@@ -73,6 +77,21 @@ pub fn generate() {
         .expect("Unable to generate bindings");
 
     bindings
-        .write_to_file(out_path.join("bindings.rs"))
+        .write_to_file(&out_bindings_path)
         .expect("Couldn't write bindings!");
+
+    let previous_contents = match fs::read(&src_bindings_path) {
+        Ok(s) => s,
+        Err(_) => vec![],
+    };
+
+    let new_contents = match fs::read(&out_bindings_path) {
+        Ok(s) => s,
+        Err(_) => vec![],
+    };
+
+    if previous_contents != new_contents {
+        // The bindings.rs were changed, update the original contents of src/bindings.rs
+        fs::copy(out_bindings_path, src_bindings_path).expect("Unable to write new bindings.");
+    };
 }
