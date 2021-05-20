@@ -44,6 +44,8 @@ macro_rules! warn {
 }
 
 fn main() {
+    println!("cargo:rerun-if-changed=bindgen.rs");
+    println!("cargo:rerun-if-changed=src/lib.rs");
     generate::generate();
 
     let mut lmdb = PathBuf::from(&env::var("CARGO_MANIFEST_DIR").unwrap());
